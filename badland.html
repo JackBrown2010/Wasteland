@@ -8,6 +8,7 @@
       margin: 0;
       overflow: hidden;
       background: #111;
+      height: 100%;
     }
     canvas {
       display: block;
@@ -17,19 +18,27 @@
 <body>
   <canvas id="gameCanvas"></canvas>
 
-  <!-- Matter.js CDN -->
+  <!-- Matter.js -->
   <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
 
   <script>
     const { Engine, Render, World, Bodies, Body, Events, Runner } = Matter;
 
-    const canvas = document.getElementById('gameCanvas');
+    const canvas = document.getElementById("gameCanvas");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     const engine = Engine.create();
     const world = engine.world;
 
+    // Player setup
+    const player = Bodies.circle(200, 300, 20, {
+      restitution: 0.2,
+      render: { fillStyle: "#FFD700" }
+    });
+    World.add(world, player);
+
+    // Renderer setup
     const render = Render.create({
       canvas: canvas,
       engine: engine,
@@ -37,11 +46,16 @@
         width: canvas.width,
         height: canvas.height,
         wireframes: false,
-        background: '#111'
+        background: "#111",
+        hasBounds: true
       }
     });
 
-    // Parallax backgrounds
+    Render.run(render);
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+
+    // Parallax background
     const bgLayers = [
       { speed: 0.2, color: "#1a1a1a" },
       { speed: 0.5, color: "#222" },
@@ -62,18 +76,76 @@
       ctx.restore();
     }
 
-    // Player
-    const player = Bodies.circle(200, 300, 20, {
-      restitution: 0.2,
-      friction: 0.1,
-      render: { fillStyle: '#FFD700' }
-    });
-    World.add(world, player);
-
-    // Level generation
-    let currentX = 0;
-    function generateTerrainSegment(startX) {
+    // Generate terrain
+    function generateTerrain(startX) {
       const floor = [];
       const ceil = [];
-      const segmentWidth = 800;
-      for (let x =
+      const width = 800;
+
+      for (let x = 0; x <= width; x += 40) {
+        const y = 600 + 40 * Math.sin((startX + x) * 0.01);
+        const topY = 200 + 20 * Math.sin((startX + x) * 0.015 + 2);
+        floor.push([startX + x, y]);
+        ceil.push([startX + x, topY]);
+      }
+
+      floor.push([startX + width, 1000], [startX, 1000]);
+      ceil.push([startX + width, 0], [startX, 0]);
+
+      const floorBody = Bodies.fromVertices(0, 0, [floor], {
+        isStatic: true,
+        render: { fillStyle: "#444" }
+      });
+
+      const ceilBody = Bodies.fromVertices(0, 0, [ceil], {
+        isStatic: true,
+        render: { fillStyle: "#444" }
+      });
+
+      Body.setPosition(floorBody, { x: 0, y: 0 });
+      Body.setPosition(ceilBody, { x: 0, y: 0 });
+
+      World.add(world, [floorBody, ceilBody]);
+    }
+
+    // Generate long level
+    for (let i = 0; i < 40; i++) {
+      generateTerrain(i * 800);
+    }
+
+    // Controls
+    let flying = false;
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space") flying = true;
+    });
+    window.addEventListener("keyup", (e) => {
+      if (e.code === "Space") flying = false;
+    });
+
+    Events.on(engine, "beforeUpdate", () => {
+      if (flying) {
+        Body.applyForce(player, player.position, { x: 0.0005, y: -0.002 });
+      } else {
+        Body.applyForce(player, player.position, { x: 0.0003, y: 0 });
+      }
+    });
+
+    // Manual render loop for background
+    (function renderLoop() {
+      requestAnimationFrame(renderLoop);
+
+      // Move camera
+      const camX = player.position.x;
+      render.bounds.min.x = camX - canvas.width / 2;
+      render.bounds.max.x = camX + canvas.width / 2;
+      render.bounds.min.y = 0;
+      render.bounds.max.y = canvas.height;
+
+      // Parallax draw
+      const ctx = render.context;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+      drawParallax(ctx, camX);
+    })();
+  </script>
+</body>
+</html>
