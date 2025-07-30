@@ -1,66 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physics Flight</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <title>Badland Style Game</title>
+  <style>
+    html, body {
+      margin: 0;
+      overflow: hidden;
+      background: #111;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-        <div id="ui">
-            <div id="score">Score: 0</div>
-            <div id="level">Level: 1</div>
-            <div id="lives">Lives: 3</div>
-        </div>
-        <div id="gameOver" class="hidden">
-            <h2>Game Over</h2>
-            <p>Final Score: <span id="finalScore">0</span></p>
-            <button id="restartBtn">Restart Game</button>
-        </div>
-    </div>
-    <script type="importmap">
-    {
-        "imports": {
-            "matter-js": "https://esm.sh/matter-js@0.19.0"
-        }
-    }
-    </script>
-    <script type="module" src="game.js"></script>
-</body>
-</html>
+  <canvas id="gameCanvas"></canvas>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physics Flight</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-        <div id="ui">
-            <div id="score">Score: 0</div>
-            <div id="level">Level: 1</div>
-            <div id="lives">Lives: 3</div>
-        </div>
-        <div id="gameOver" class="hidden">
-            <h2>Game Over</h2>
-            <p>Final Score: <span id="finalScore">0</span></p>
-            <button id="restartBtn">Restart Game</button>
-        </div>
-    </div>
-    <script type="importmap">
-    {
-        "imports": {
-            "matter-js": "https://esm.sh/matter-js@0.19.0"
-        }
-    }
-    </script>
-    <script type="module" src="game.js"></script>
-</body>
-</html>
+  <!-- Matter.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
 
+  <script>
+    const { Engine, Render, World, Bodies, Body, Events, Runner } = Matter;
+
+    const canvas = document.getElementById('gameCanvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const engine = Engine.create();
+    const world = engine.world;
+
+    const render = Render.create({
+      canvas: canvas,
+      engine: engine,
+      options: {
+        width: canvas.width,
+        height: canvas.height,
+        wireframes: false,
+        background: '#111'
+      }
+    });
+
+    // Parallax backgrounds
+    const bgLayers = [
+      { speed: 0.2, color: "#1a1a1a" },
+      { speed: 0.5, color: "#222" },
+      { speed: 1.0, color: "#333" }
+    ];
+
+    function drawParallax(ctx, camX) {
+      ctx.save();
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      for (const layer of bgLayers) {
+        ctx.fillStyle = layer.color;
+        for (let i = -1; i < 10; i++) {
+          const x = ((i * 400 - camX * layer.speed) % canvas.width + canvas.width) % canvas.width;
+          ctx.fillRect(x, 0, 400, canvas.height);
+        }
+      }
+      ctx.restore();
+    }
+
+    // Player
+    const player = Bodies.circle(200, 300, 20, {
+      restitution: 0.2,
+      friction: 0.1,
+      render: { fillStyle: '#FFD700' }
+    });
+    World.add(world, player);
+
+    // Level generation
+    let currentX = 0;
+    function generateTerrainSegment(startX) {
+      const floor = [];
+      const ceil = [];
+      const segmentWidth = 800;
+      for (let x =
