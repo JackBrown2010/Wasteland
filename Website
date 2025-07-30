@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Flight</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui">
+            <div id="score">Score: 0</div>
+            <div id="level">Level: 1</div>
+            <div id="lives">Lives: 3</div>
+        </div>
+        <div id="gameOver" class="hidden">
+            <h2>Game Over</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button id="restartBtn">Restart Game</button>
+        </div>
+    </div>
+    <script type="importmap">
+    {
+        "imports": {
+            "matter-js": "https://esm.sh/matter-js@0.19.0"
+        }
+    }
+    </script>
+    <script type="module" src="game.js"></script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Flight</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui">
+            <div id="score">Score: 0</div>
+            <div id="level">Level: 1</div>
+            <div id="lives">Lives: 3</div>
+        </div>
+        <div id="gameOver" class="hidden">
+            <h2>Game Over</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button id="restartBtn">Restart Game</button>
+        </div>
+    </div>
+    <script type="importmap">
+    {
+        "imports": {
+            "matter-js": "https://esm.sh/matter-js@0.19.0"
+        }
+    }
+    </script>
+    <script type="module" src="game.js"></script>
+</body>
+</html>
+
