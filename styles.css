@@ -1,0 +1,10 @@
+#parallax {
+  background-image: url('https://i.imgur.com/4NJlF4Z.png'); /* Replace with your own */
+  background-size: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300%;
+  height: 100%;
+  z-index: -1;
+}
