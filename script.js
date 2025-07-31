@@ -71,6 +71,13 @@ Events.on(engine, 'beforeUpdate', () => {
     Body.applyForce(player, player.position, { x: 0, y: -0.005 }); // Increased lift
   }
 
+// Constant forward movement
+Body.setVelocity(player, {
+  x: scrollSpeed,
+  y: player.velocity.y
+});
+
+  
   // Autoscroll view
   cameraX += scrollSpeed;
   render.bounds.min.x = cameraX;
