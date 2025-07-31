@@ -63,7 +63,7 @@ const bg = document.getElementById('parallax');
 
 // Camera scroll
 let cameraX = 0;
-const scrollSpeed = 2;
+const scrollSpeed = 1;
 
 // Game loop
 Events.on(engine, 'beforeUpdate', () => {
@@ -73,7 +73,7 @@ Events.on(engine, 'beforeUpdate', () => {
 
 // Constant forward movement
 Body.setVelocity(player, {
-  x: scrollSpeed,
+  x: scrollSpeed += 0.1,
   y: player.velocity.y
 });
 
