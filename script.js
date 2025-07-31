@@ -1,9 +1,11 @@
 const { Engine, Render, Runner, World, Bodies, Body, Events } = Matter;
 
+// Create engine with lower gravity
 const engine = Engine.create();
+engine.gravity.y = 0.4; // Lower than default 1.0
+
 const world = engine.world;
 
-// Create the renderer
 const width = window.innerWidth;
 const height = window.innerHeight;
 
@@ -65,12 +67,11 @@ const scrollSpeed = 2;
 
 // Game loop
 Events.on(engine, 'beforeUpdate', () => {
-  // Apply soft upward force
   if (flying) {
-    Body.applyForce(player, player.position, { x: 0, y: -0.002 });
+    Body.applyForce(player, player.position, { x: 0, y: -0.005 }); // Increased lift
   }
 
-  // Autoscroll world
+  // Autoscroll view
   cameraX += scrollSpeed;
   render.bounds.min.x = cameraX;
   render.bounds.max.x = cameraX + width;
@@ -80,6 +81,6 @@ Events.on(engine, 'beforeUpdate', () => {
 
   render.options.hasBounds = true;
 
-  // Move background for parallax
+  // Move background
   bg.style.transform = `translateX(${-cameraX * 0.3}px)`;
 });
