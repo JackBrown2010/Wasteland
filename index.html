@@ -2,30 +2,187 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Badland Style Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Badland-Inspired Game</title>
   <style>
-    html, body {
+    body, html {
       margin: 0;
       padding: 0;
       overflow: hidden;
+      font-family: sans-serif;
       background: black;
+      color: white;
     }
-    canvas {
-      display: block;
-    }
-    #parallax {
+    #level-select {
       position: absolute;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      background: linear-gradient(to bottom, #222, #444);
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .day {
+      margin: 10px;
+    }
+    .levels {
+      display: flex;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    button {
+      padding: 5px 10px;
+      background: #333;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #111;
+      color: #666;
+      cursor: not-allowed;
+    }
+    #gameCanvas {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div id="parallax"></div>
-  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
-  <script src="script.js"></script>
+  <div id="level-select"></div>
+  <canvas id="gameCanvas"></canvas>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <script>
+    const DAYS = ["Day One", "Day Two", "Origin", "Day Three", "Armageddon"];
+    const TIMES = ["Dawn", "Noon", "Dusk", "Night", "Midnight"];
+    let unlockedLevels = JSON.parse(localStorage.getItem("unlockedLevels") || '{}');
+
+    function isLevelUnlocked(dayIndex, timeIndex) {
+      const key = `${dayIndex}-${timeIndex}`;
+      if (dayIndex === 0 && timeIndex === 0) return true; // Always unlock first
+      if (timeIndex === 4) {
+        return unlockedLevels[`${dayIndex}-3`] === true;
+      }
+      if (dayIndex === 2) return unlockedLevels["1-3"];
+      if (dayIndex === 3) return unlockedLevels["1-3"];
+      if (dayIndex === 4) {
+        return ["0-4", "1-4", "2-4", "3-4"].every(k => unlockedLevels[k]);
+      }
+      return unlockedLevels[`${dayIndex}-${timeIndex - 1}`] === true;
+    }
+
+    function unlockLevel(dayIndex, timeIndex) {
+      const key = `${dayIndex}-${timeIndex}`;
+      unlockedLevels[key] = true;
+      localStorage.setItem("unlockedLevels", JSON.stringify(unlockedLevels));
+    }
+
+    function renderLevelSelect() {
+      const container = document.getElementById("level-select");
+      container.innerHTML = '';
+
+      DAYS.forEach((day, dIdx) => {
+        const dayDiv = document.createElement("div");
+        dayDiv.className = "day";
+        dayDiv.innerHTML = `<strong>${day}</strong>`;
+
+        const levelsDiv = document.createElement("div");
+        levelsDiv.className = "levels";
+
+        TIMES.forEach((time, tIdx) => {
+          const btn = document.createElement("button");
+          btn.textContent = time;
+          btn.disabled = !isLevelUnlocked(dIdx, tIdx);
+          btn.onclick = () => startLevel(dIdx, tIdx);
+          levelsDiv.appendChild(btn);
+        });
+
+        dayDiv.appendChild(levelsDiv);
+        container.appendChild(dayDiv);
+      });
+    }
+
+    function startLevel(dayIndex, timeIndex) {
+      document.getElementById("level-select").style.display = "none";
+      document.getElementById("gameCanvas").style.display = "block";
+      runGame(dayIndex, timeIndex);
+    }
+
+    function finishLevel(dayIndex, timeIndex) {
+      unlockLevel(dayIndex, timeIndex);
+      renderLevelSelect();
+      document.getElementById("level-select").style.display = "block";
+      document.getElementById("gameCanvas").style.display = "none";
+    }
+
+    function runGame(dayIndex, timeIndex) {
+      const { Engine, Render, Runner, Bodies, Composite, Body, Events } = Matter;
+
+      const engine = Engine.create();
+      const world = engine.world;
+
+      const canvas = document.getElementById("gameCanvas");
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+
+      const render = Render.create({
+        canvas,
+        engine,
+        options: {
+          width,
+          height,
+          wireframes: false,
+          background: '#111'
+        }
+      });
+
+      Render.run(render);
+      const runner = Runner.create();
+      Runner.run(runner, engine);
+
+      const ground = Bodies.rectangle(1000, height - 20, 2000, 40, { isStatic: true });
+      Composite.add(world, [ground]);
+
+      const player = Bodies.circle(100, height / 2, 30, { restitution: 0.2 });
+      Composite.add(world, player);
+
+      let flying = false;
+      window.onmousedown = () => flying = true;
+      window.onmouseup = () => flying = false;
+
+      let cameraX = 0;
+      const scrollSpeed = 5;
+
+      Events.on(engine, 'beforeUpdate', () => {
+        if (flying) {
+          Body.applyForce(player, player.position, { x: 0, y: -0.005 });
+        }
+        Body.setVelocity(player, {
+          x: scrollSpeed,
+          y: player.velocity.y
+        });
+
+        cameraX += scrollSpeed;
+        render.bounds.min.x = cameraX;
+        render.bounds.max.x = cameraX + width;
+        render.bounds.min.y = 0;
+        render.bounds.max.y = height;
+        render.options.hasBounds = true;
+      });
+
+      // Simulate win after 15 seconds for now
+      setTimeout(() => {
+        finishLevel(dayIndex, timeIndex);
+      }, 15000);
+    }
+
+    renderLevelSelect();
+  </script>
 </body>
 </html>
